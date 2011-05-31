@@ -1,0 +1,115 @@
+Nfix: a Coq extension for fixpoints on nested inductives
+========================================================
+Copyright 2010 Stéphane Lescuyer <stephane.lescuyer@inria.fr>
+
+Features
+========
+
+This plugin provides a syntactic extension that allows one to
+write mutual fixpoints over nested inductives. The typical
+example is the following [term] structure :
+
+Inductive term : Set := app : nat -> list term -> term.
+
+Coq allows such definitions where the recursive occurrences
+of [term] are nested in the [list] inductive ; unfortunately,
+Coq does not allow mutual fixpoints to be written in the
+following, natural way :
+
+Fixpoint size_term (t : term) : nat :=
+  match t with app _ l => size_lterm end
+with size_lterm (l : list term) : nat :=
+  match l with
+  | nil => 0
+  | cons t q => size_term t + size_lterm q
+  end.
+
+This plugin lets you write such a nested fixpoint, with
+the [Nested Fixpoint] command :
+
+Nested Fixpoint size_term (t : term) : nat :=
+  match t with app _ l => size_lterm end
+with size_lterm (l : list term) : nat :=
+  match l with
+  | nil => 0
+  | cons t q => size_term t + size_lterm q
+  end.
+
+This command is just a syntactic extension, it doesn't alter
+Coq's guard condition but only works around it. In the example
+above, it actually performs the following definitions :
+
+Definition size_lterm_ (size : term -> nat) :=
+  fix size_lterm (l : list term) : nat :=
+    match l with
+    | nil => 0
+    | cons t q => size t + size_lterm q
+  end.
+Fixpoint size_term (t : term) : nat :=
+  match t with
+  | app _ l => size_lterm_ size_term l
+  end.
+Definition size_lterm := size_lterm_ size_term.
+
+For now, the [Nested Fixpoint] command has the following
+restrictions :
+- all arguments' and return types must be given explicitely,
+  as is the case with the Function extension ;
+- the argument on which is performed the induction must be
+  the first argument ;
+- if the type on which the induction is performed is an
+  inductive type with [n] mutually inductive components,
+  and [m] distinct nested occurrences, the first [n] bodies
+  passed to [Nested Fixpoint] must correspond to the
+  mutually inductive components, and the next [m] bodies
+  must be given in dependency order.
+To sum up, the accepted definitions have the form:
+
+Nested Fixpoint f1 (x:I1) : T1 :=
+...
+with fn (x:In) : Tn :=
+...
+with g1 (J1(I1,..,In)) : U1 :=
+...
+with gm (Jm(I1,..In)) : Um :=
+...
+end.
+
+where [I1,... ,In] is a mutual inductive block, and the
+[Jk(I1,...,In)] are the nested occurrences in this block.
+The [gk] can refer to all the [fi], and the [gi] with i
+smaller or equal to k. See tests/TestNfix.v for examples.
+
+Files
+=====
+
+The archive has 3 subdirectories:
+src/ contains the code of the plugin in nfix.ml and
+  a support file for building the plugin.
+
+theories/ contains Nfix.v used to load the plugin on
+  the Coq side.
+
+tests/ just demonstrates a use of the plugin
+
+Installation
+============
+
+First, you should have coqc, ocamlc and make in your path.
+Then simply do:
+
+# coq_makefile -f make > Makefile
+
+To generate a makefile from the description in Make, then [make].
+This will consecutively build the plugin, the supporting
+theories and the test file.
+
+You can then either install the plugin with
+
+# sudo ./install.sh
+
+or leave it in its current directory and to be able to import it
+from anywhere in Coq, simply add the following to ~/.coqrc:
+
+Add Rec LoadPath "path_to_nfix/theories" as Nfix.
+Add ML Path "path_to_nfix/src".
