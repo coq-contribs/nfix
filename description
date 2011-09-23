@@ -1,0 +1,7 @@
+Name: Nfix
+Title: Nfix: a Coq extension for fixpoints on nested inductives
+Author: Stéphane Lescuyer
+Institution: INRIA Saclay - Île-de-France, ProVal project
+Description: This plugin provides a syntactic extension that allows one to write mutual fixpoints over nested inductives.
+Keywords: mutual fixpoint functions
+Category: Miscellaneous/Coq Extensions
