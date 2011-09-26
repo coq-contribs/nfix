@@ -48,11 +48,11 @@ let mk_binder (idl,c) =
 
 (* à la v8.2... *)
 let declare_definition
-    id (loc, boxed_flag, def_obj_kind)
+    id (loc, def_obj_kind)
     binder_list red_expr_opt constr_expr
     constr_expr_opt decl_hook =
   let (def_entry, man_impl) =
-    Command.interp_definition boxed_flag binder_list red_expr_opt constr_expr
+    Command.interp_definition binder_list red_expr_opt constr_expr
       constr_expr_opt
   in
     Command.declare_definition
@@ -99,7 +99,7 @@ let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
   let g_ =
     abstract_constr_expr gfix fbl in
     declare_definition newid
-      (Decl_kinds.Global, false, Decl_kinds.Definition)
+      (Decl_kinds.Global, Decl_kinds.Definition)
       [] None g_ None (fun _ _ -> ())
 
 
@@ -153,7 +153,6 @@ let create_mutual_fixpoint fids greps fdefs =
   in
     Command.do_fixpoint
       (List.map (fun fdef -> create_fixpoint_expr fdef, []) fdefs)
-      true
 
 (* Creates aliases for the nested blocks :
    Definition g1 := g1_ f1 ... fn.
@@ -164,7 +163,7 @@ let create_aliases fids greps =
   List.iter (fun (gid, gnewid) ->
 	       let galias = mkAppC (mkIdentC gnewid, fids) in
 		 declare_definition gid
-		   (Decl_kinds.Global, false, Decl_kinds.Definition)
+		   (Decl_kinds.Global, Decl_kinds.Definition)
 		   [] None galias None (fun _ _ -> ())
 	    ) greps
 
