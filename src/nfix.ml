@@ -8,7 +8,7 @@ open Topconstr
 open Nameops
 
 let pr_nbinder (idl,c) =
-  str "(" ++ Util.prlist_with_sep spc Nameops.pr_id idl ++ spc () ++
+  str "(" ++ pr_sequence Nameops.pr_id idl ++ spc () ++
     str ": " ++ Ppconstr.pr_lconstr_expr c ++ str ")"
 
 VERNAC ARGUMENT EXTEND nbinder
@@ -18,7 +18,7 @@ END
 
 let pr_nfix_definition (id,bl,type_,def) =
   Nameops.pr_id id ++ spc () ++
-    Util.prlist_with_sep spc pr_nbinder bl ++ spc () ++ str ":" ++ spc () ++
+    pr_sequence pr_nbinder bl ++ spc () ++ str ":" ++ spc () ++
     Ppconstr.pr_lconstr_expr type_ ++ str " :=" ++ spc () ++
     Ppconstr.pr_lconstr_expr def
 
@@ -28,8 +28,8 @@ PRINTED BY pr_nfix_definition
     [ (id,bl,type_,def) ]
       END
 
-let hole = CHole (Util.dummy_loc, None)
-let dl id = Util.dummy_loc, id
+let hole = CHole (dummy_loc, None)
+let dl id = dummy_loc, id
 
 let rec split_at n l =
   match n with
@@ -87,12 +87,12 @@ let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
     replace_vars_constr_expr [idg, newid] gdef in
   let gdef_with_lets =
     List.fold_left (fun constr (gid, gnewid) ->
-		      CLetIn (Util.dummy_loc,
+		      CLetIn (dummy_loc,
 			      dl (Names.Name gid),
 			      mkAppC (mkIdentC gnewid, fids),
 			      constr)) gdef_renamed greps in
   let gfix =
-    CFix (Util.dummy_loc, dl newid,
+    CFix (dummy_loc, dl newid,
 	  [dl newid, (None, CStructRec),
 	   List.map mk_binder bg,
 	   tg, gdef_with_lets]) in
@@ -141,7 +141,7 @@ let create_mutual_fixpoint fids greps fdefs =
   let create_fixpoint_expr (idf, bf, tf, f) =
     let f_with_lets =
       List.fold_left (fun constr (gid, gnewid) ->
-			CLetIn (Util.dummy_loc,
+			CLetIn (dummy_loc,
 				dl (Names.Name gid),
 				mkAppC (mkIdentC gnewid, fids),
 				constr)) f greps
@@ -209,7 +209,7 @@ let nested_fixpoint bodyl =
 		    List.map (fun (id, _, _, _) -> mkIdentC id) mbodyl in
 		  let fbl : local_binder list =
 		    List.map (fun (id, bl, t, _) ->
-				let rt = mkCProdN Util.dummy_loc
+				let rt = mkCProdN dummy_loc
 				  (List.map mk_binder bl) t in
 				  mk_binder ([id], rt))
 		      mbodyl
