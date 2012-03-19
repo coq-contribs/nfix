@@ -51,12 +51,9 @@ let declare_definition
     id (loc, def_obj_kind)
     binder_list red_expr_opt constr_expr
     constr_expr_opt decl_hook =
-  let (def_entry, man_impl) =
-    Command.interp_definition binder_list red_expr_opt constr_expr
-      constr_expr_opt
-  in
-    Command.declare_definition
-      id (loc, def_obj_kind) def_entry man_impl decl_hook
+  Command.do_definition
+  id (loc, def_obj_kind) binder_list red_expr_opt constr_expr
+  constr_expr_opt decl_hook
 
 (* [abstract_body]
     - [idg, bg, tg, gdef] is a block from the definition
