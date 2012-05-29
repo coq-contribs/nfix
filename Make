@@ -7,7 +7,7 @@ NFIX_PLUGIN = "src/nfix_plugin.cma"
 NFIX_PLUGINOPT = "src/nfix_plugin.cmxs"
 COQDOC = "$(COQBIN)coqdoc -interpolate -utf8"
 CAMLP4OPTIONS = "-loc loc"
-src/nfix.ml
+src/nfix.ml4
 src/nfix_plugin_mod.ml
 theories/Nfix.v
 tests/TestNfix.v

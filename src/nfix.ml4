@@ -4,6 +4,8 @@
 open Pcoq
 open Pp
 open Flags
+open Constrexpr
+open Constrexpr_ops
 open Topconstr
 open Nameops
 
@@ -43,7 +45,7 @@ let rec split_at n l =
 
 let mk_binder (idl,c) =
   LocalRawAssum (List.map (fun id -> dl (Names.Name id)) idl,
-		 Topconstr.default_binder_kind,
+		 default_binder_kind,
 		 c)
 
 (* à la v8.2... *)
@@ -216,7 +218,7 @@ let nested_fixpoint bodyl =
 		  in
 		    create_mutual_fixpoint fids greps mbodyl;
 		    create_aliases fids greps
-    	    | [] -> if_verbose msgnl (str "Empty list of binders")
+	    | [] -> if_verbose msgnl (str "Empty list of binders")
 	end
     | [] -> if_verbose msgnl (str "Empty list of definitions")
 
