@@ -1,13 +1,8 @@
 -I src
 -R theories Nfix
--custom "$(CAMLOPTLINK) $(ZDEBUG) $(ZFLAGS) -shared -o src/nfix_plugin.cmxs src/nfix.cmx src/nfix_plugin_mod.cmx" "src/nfix.cmx src/nfix_plugin_mod.cmx" src/nfix_plugin.cmxs
--custom "$(CAMLLINK) -g -a -o src/nfix_plugin.cma src/nfix.cmo src/nfix_plugin_mod.cmo" "src/nfix.cmo src/nfix_plugin_mod.cmo" src/nfix_plugin.cma
--custom "$(COQBIN)coqc $(COQDEBUG) $(COQFLAGS) $*" "%.v $(NFIX_PLUGINOPT) $(NFIX_PLUGIN)" "%.vo %.glob"
-NFIX_PLUGIN = "src/nfix_plugin.cma"
-NFIX_PLUGINOPT = "src/nfix_plugin.cmxs"
-COQDOC = "$(COQBIN)coqdoc -interpolate -utf8"
 CAMLP4OPTIONS = "-loc loc"
 src/nfix.ml4
 src/nfix_plugin_mod.ml
+src/nfix_plugin.mllib
 theories/Nfix.v
 tests/TestNfix.v
