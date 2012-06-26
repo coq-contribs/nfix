@@ -30,8 +30,8 @@ PRINTED BY pr_nfix_definition
     [ (id,bl,type_,def) ]
       END
 
-let hole = CHole (dummy_loc, None)
-let dl id = dummy_loc, id
+let hole = CHole (Loc.ghost, None)
+let dl id = Loc.ghost, id
 
 let rec split_at n l =
   match n with
@@ -86,12 +86,12 @@ let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
     replace_vars_constr_expr [idg, newid] gdef in
   let gdef_with_lets =
     List.fold_left (fun constr (gid, gnewid) ->
-		      CLetIn (dummy_loc,
+		      CLetIn (Loc.ghost,
 			      dl (Names.Name gid),
 			      mkAppC (mkIdentC gnewid, fids),
 			      constr)) gdef_renamed greps in
   let gfix =
-    CFix (dummy_loc, dl newid,
+    CFix (Loc.ghost, dl newid,
 	  [dl newid, (None, CStructRec),
 	   List.map mk_binder bg,
 	   tg, gdef_with_lets]) in
@@ -140,7 +140,7 @@ let create_mutual_fixpoint fids greps fdefs =
   let create_fixpoint_expr (idf, bf, tf, f) =
     let f_with_lets =
       List.fold_left (fun constr (gid, gnewid) ->
-			CLetIn (dummy_loc,
+			CLetIn (Loc.ghost,
 				dl (Names.Name gid),
 				mkAppC (mkIdentC gnewid, fids),
 				constr)) f greps
@@ -208,7 +208,7 @@ let nested_fixpoint bodyl =
 		    List.map (fun (id, _, _, _) -> mkIdentC id) mbodyl in
 		  let fbl : local_binder list =
 		    List.map (fun (id, bl, t, _) ->
-				let rt = mkCProdN dummy_loc
+				let rt = mkCProdN Loc.ghost
 				  (List.map mk_binder bl) t in
 				  mk_binder ([id], rt))
 		      mbodyl
