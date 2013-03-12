@@ -78,7 +78,6 @@ COQSRCLIBS?=-I "$(COQLIB)kernel" -I "$(COQLIB)lib" \
   -I $(COQLIB)/plugins/cc \
   -I $(COQLIB)/plugins/decl_mode \
   -I $(COQLIB)/plugins/extraction \
-  -I $(COQLIB)/plugins/field \
   -I $(COQLIB)/plugins/firstorder \
   -I $(COQLIB)/plugins/fourier \
   -I $(COQLIB)/plugins/funind \
@@ -86,7 +85,6 @@ COQSRCLIBS?=-I "$(COQLIB)kernel" -I "$(COQLIB)lib" \
   -I $(COQLIB)/plugins/nsatz \
   -I $(COQLIB)/plugins/omega \
   -I $(COQLIB)/plugins/quote \
-  -I $(COQLIB)/plugins/ring \
   -I $(COQLIB)/plugins/romega \
   -I $(COQLIB)/plugins/rtauto \
   -I $(COQLIB)/plugins/setoid_ring \
