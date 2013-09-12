@@ -83,7 +83,7 @@ let declare_definition
 *)
 let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
   let gdef_renamed =
-    replace_vars_constr_expr [idg, newid] gdef in
+    replace_vars_constr_expr (Names.Id.Map.add idg newid Names.Id.Map.empty) gdef in
   let gdef_with_lets =
     List.fold_left (fun constr (gid, gnewid) ->
 		      CLetIn (Loc.ghost,
@@ -99,7 +99,7 @@ let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
     abstract_constr_expr gfix fbl in
     declare_definition newid
       (Decl_kinds.Global, Decl_kinds.Definition)
-      [] None g_ None (fun _ _ -> ())
+      [] None g_ None None
 
 
 (* Creates the generalized [g_] functions for all the
@@ -163,7 +163,7 @@ let create_aliases fids greps =
 	       let galias = mkAppC (mkIdentC gnewid, fids) in
 		 declare_definition gid
 		   (Decl_kinds.Global, Decl_kinds.Definition)
-		   [] None galias None (fun _ _ -> ())
+		   [] None galias None None
 	    ) greps
 
 (* Takes a list of blocks and defines everything.
@@ -222,7 +222,7 @@ let nested_fixpoint bodyl =
 	end
     | [] -> if_verbose msgnl (str "Empty list of definitions")
 
-VERNAC COMMAND EXTEND NestedFixpoint
+VERNAC COMMAND EXTEND NestedFixpoint CLASSIFIED AS SIDEFF
   [ "Nested" "Fixpoint"
       ne_nfix_definition_list_sep(bodyl,"with")
   ] ->
