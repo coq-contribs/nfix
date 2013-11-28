@@ -30,7 +30,7 @@ PRINTED BY pr_nfix_definition
     [ (id,bl,type_,def) ]
       END
 
-let hole = CHole (Loc.ghost, None)
+let hole = CHole (Loc.ghost, None, None)
 let dl id = Loc.ghost, id
 
 let rec split_at n l =
