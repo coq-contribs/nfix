@@ -54,7 +54,7 @@ let declare_definition
     binder_list red_expr_opt constr_expr
     constr_expr_opt decl_hook =
   Command.do_definition
-  id (loc, def_obj_kind) binder_list red_expr_opt constr_expr
+  id (loc, false, def_obj_kind) binder_list red_expr_opt constr_expr
   constr_expr_opt decl_hook
 
 (* [abstract_body]
@@ -150,7 +150,7 @@ let create_mutual_fixpoint fids greps fdefs =
        List.map mk_binder bf,
        tf, Some f_with_lets)
   in
-    Command.do_fixpoint Decl_kinds.Global
+    Command.do_fixpoint Decl_kinds.Global false
       (List.map (fun fdef -> create_fixpoint_expr fdef, []) fdefs)
 
 (* Creates aliases for the nested blocks :
@@ -193,7 +193,7 @@ let nested_fixpoint bodyl =
 	    | (_, c)::_ ->
 		let constr =
 		  Constrintern.interp_constr Evd.empty (Global.env ()) c in
-		let (ind, _) = Inductive.find_rectype (Global.env ()) constr in
+		let ((ind, _), _) = Inductive.find_rectype (Global.env ()) (fst constr) in
 		let (mind, _) = Global.lookup_inductive ind in
 		let n = mind.Declarations.mind_ntypes in
 		let mbodyl, nbodyl = split_at n bodyl in
