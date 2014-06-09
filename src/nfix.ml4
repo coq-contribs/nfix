@@ -99,7 +99,7 @@ let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
     abstract_constr_expr gfix fbl in
     declare_definition newid
       (Decl_kinds.Global, Decl_kinds.Definition)
-      [] None g_ None (fun _ _ -> ())
+      [] None g_ None (Lemmas.mk_hook (fun _ _ -> ()))
 
 
 (* Creates the generalized [g_] functions for all the
@@ -163,7 +163,7 @@ let create_aliases fids greps =
 	       let galias = mkAppC (mkIdentC gnewid, fids) in
 		 declare_definition gid
 		   (Decl_kinds.Global, Decl_kinds.Definition)
-		   [] None galias None (fun _ _ -> ())
+		   [] None galias None (Lemmas.mk_hook (fun _ _ -> ()))
 	    ) greps
 
 (* Takes a list of blocks and defines everything.
