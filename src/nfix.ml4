@@ -192,7 +192,7 @@ let nested_fixpoint bodyl =
 	  match bl with
 	    | (_, c)::_ ->
 		let constr =
-		  Constrintern.interp_constr Evd.empty (Global.env ()) c in
+		  Constrintern.interp_constr (Global.env ()) Evd.empty c in
 		let ((ind, _), _) = Inductive.find_rectype (Global.env ()) (fst constr) in
 		let (mind, _) = Global.lookup_inductive ind in
 		let n = mind.Declarations.mind_ntypes in
