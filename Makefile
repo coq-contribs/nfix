@@ -46,9 +46,12 @@ TIMER=$(if $(TIMED), $(STDTIME), $(TIMECMD))
 #                        #
 ##########################
 
-OCAMLLIBS?=-I src
-COQLIBS?=-I src -R theories Nfix
-COQDOCLIBS?=-R theories Nfix
+OCAMLLIBS?=-I "src"
+COQLIBS?=\
+  -R "theories" Nfix\
+  -I "src"
+COQDOCLIBS?=\
+  -R "theories" Nfix
 
 ##########################
 #                        #
@@ -74,36 +77,37 @@ COQSRCLIBS?=-I "$(COQLIB)kernel" -I "$(COQLIB)lib" \
   -I "$(COQLIB)interp" -I "$(COQLIB)printing" -I "$(COQLIB)intf" \
   -I "$(COQLIB)proofs" -I "$(COQLIB)tactics" -I "$(COQLIB)tools" \
   -I "$(COQLIB)toplevel" -I "$(COQLIB)stm" -I "$(COQLIB)grammar" \
-    -I "$(COQLIB)/plugins/Derive" \
-    -I "$(COQLIB)/plugins/btauto" \
-    -I "$(COQLIB)/plugins/cc" \
-    -I "$(COQLIB)/plugins/decl_mode" \
-    -I "$(COQLIB)/plugins/extraction" \
-    -I "$(COQLIB)/plugins/firstorder" \
-    -I "$(COQLIB)/plugins/fourier" \
-    -I "$(COQLIB)/plugins/funind" \
-    -I "$(COQLIB)/plugins/micromega" \
-    -I "$(COQLIB)/plugins/nsatz" \
-    -I "$(COQLIB)/plugins/omega" \
-    -I "$(COQLIB)/plugins/quote" \
-    -I "$(COQLIB)/plugins/romega" \
-    -I "$(COQLIB)/plugins/rtauto" \
-    -I "$(COQLIB)/plugins/setoid_ring" \
-    -I "$(COQLIB)/plugins/syntax" \
-    -I "$(COQLIB)/plugins/xml"
+  -I "$(COQLIB)config" \
+  -I "$(COQLIB)/plugins/Derive" \
+  -I "$(COQLIB)/plugins/btauto" \
+  -I "$(COQLIB)/plugins/cc" \
+  -I "$(COQLIB)/plugins/decl_mode" \
+  -I "$(COQLIB)/plugins/extraction" \
+  -I "$(COQLIB)/plugins/firstorder" \
+  -I "$(COQLIB)/plugins/fourier" \
+  -I "$(COQLIB)/plugins/funind" \
+  -I "$(COQLIB)/plugins/micromega" \
+  -I "$(COQLIB)/plugins/nsatz" \
+  -I "$(COQLIB)/plugins/omega" \
+  -I "$(COQLIB)/plugins/quote" \
+  -I "$(COQLIB)/plugins/romega" \
+  -I "$(COQLIB)/plugins/rtauto" \
+  -I "$(COQLIB)/plugins/setoid_ring" \
+  -I "$(COQLIB)/plugins/syntax" \
+  -I "$(COQLIB)/plugins/xml"
 ZFLAGS=$(OCAMLLIBS) $(COQSRCLIBS) -I $(CAMLP4LIB)
 
-CAMLC?=$(OCAMLC) -c -rectypes
-CAMLOPTC?=$(OCAMLOPT) -c -rectypes
-CAMLLINK?=$(OCAMLC) -rectypes
-CAMLOPTLINK?=$(OCAMLOPT) -rectypes
+CAMLC?=$(OCAMLC) -c -rectypes -thread
+CAMLOPTC?=$(OCAMLOPT) -c -rectypes -thread
+CAMLLINK?=$(OCAMLC) -rectypes -thread
+CAMLOPTLINK?=$(OCAMLOPT) -rectypes -thread
 GRAMMARS?=grammar.cma
 ifeq ($(CAMLP4),camlp5)
-CAMLP4EXTEND=pa_extend.cmo q_MLast.cmo pa_macro.cmo
+CAMLP4EXTEND=pa_extend.cmo q_MLast.cmo pa_macro.cmo unix.cma threads.cma
 else
 CAMLP4EXTEND=
 endif
-PP?=-pp '$(CAMLP4O) -I $(CAMLLIB) -I . $(COQSRCLIBS) compat5.cmo \
+PP?=-pp '$(CAMLP4O) -I $(CAMLLIB) -I $(CAMLLIB)threads/ $(COQSRCLIBS) compat5.cmo \
   $(CAMLP4EXTEND) $(GRAMMARS) $(CAMLP4OPTIONS) -impl'
 
 ##################
@@ -119,6 +123,7 @@ COQDOCINSTALL=$(XDG_DATA_HOME)/doc/coq
 else
 COQLIBINSTALL="${COQLIB}user-contrib"
 COQDOCINSTALL="${DOCDIR}user-contrib"
+COQTOPINSTALL="${COQLIB}toploop"
 endif
 
 ######################
@@ -237,8 +242,12 @@ userinstall:
 install-natdynlink:
 	install -d "$(DSTROOT)"$(COQLIBINSTALL)/Nfix; \
 	for i in $(CMXSFILESINC); do \
-	 install -m 0644 $$i "$(DSTROOT)"$(COQLIBINSTALL)/Nfix/`basename $$i`; \
+	 install -m 0755 $$i "$(DSTROOT)"$(COQLIBINSTALL)/Nfix/`basename $$i`; \
 	done
+
+install-toploop: $(MLLIBFILES:.mllib=.cmxs)
+	 install -d "$(DSTROOT)"$(COQTOPINSTALL)/
+	 install -m 0644 $?  "$(DSTROOT)"$(COQTOPINSTALL)/
 
 install:$(if $(HASNATDYNLINK_OR_EMPTY),install-natdynlink)
 	cd "theories" && for i in $(VOFILES1); do \
@@ -298,64 +307,67 @@ Makefile: Make
 #                 #
 ###################
 
-%.cmo: %.ml4
+$(ML4FILES:.ml4=.cmo): %.cmo: %.ml4
 	$(CAMLC) $(ZDEBUG) $(ZFLAGS) $(PP) -impl $<
 
-%.cmx: %.ml4
+$(filter-out $(addsuffix .cmx,$(foreach lib,$(MLPACKFILES:.mlpack=_MLPACK_DEPENDENCIES),$($(lib)))),$(ML4FILES:.ml4=.cmx)): %.cmx: %.ml4
 	$(CAMLOPTC) $(ZDEBUG) $(ZFLAGS) $(PP) -impl $<
 
-%.ml4.d: %.ml4
+$(addsuffix .d,$(ML4FILES)): %.ml4.d: %.ml4
 	$(COQDEP) $(OCAMLLIBS) "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
 
-%.cmo: %.ml
+$(MLFILES:.ml=.cmo): %.cmo: %.ml
 	$(CAMLC) $(ZDEBUG) $(ZFLAGS) $<
 
-%.cmx: %.ml
+$(filter-out $(addsuffix .cmx,$(foreach lib,$(MLPACKFILES:.mlpack=_MLPACK_DEPENDENCIES),$($(lib)))),$(MLFILES:.ml=.cmx)): %.cmx: %.ml
 	$(CAMLOPTC) $(ZDEBUG) $(ZFLAGS) $<
 
-%.ml.d: %.ml
+$(addsuffix .d,$(MLFILES)): %.ml.d: %.ml
 	$(OCAMLDEP) -slash $(OCAMLLIBS) "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
 
-%.cmxs: %.cmxa
-	$(CAMLOPTLINK) $(ZDEBUG) $(ZFLAGS) -linkall -shared -o $@ $<
-
-%.cmxs: %.cmx
+$(filter-out $(MLLIBFILES:.mllib=.cmxs),$(MLFILES:.ml=.cmxs) $(ML4FILES:.ml4=.cmxs) $(MLPACKFILES:.mlpack=.cmxs)): %.cmxs: %.cmx
 	$(CAMLOPTLINK) $(ZDEBUG) $(ZFLAGS) -shared -o $@ $<
 
-%.cma: | %.mllib
+$(MLLIBFILES:.mllib=.cmxs): %.cmxs: %.cmxa
+	$(CAMLOPTLINK) $(ZDEBUG) $(ZFLAGS) -linkall -shared -o $@ $<
+
+$(MLLIBFILES:.mllib=.cma): %.cma: | %.mllib
 	$(CAMLLINK) $(ZDEBUG) $(ZFLAGS) -a -o $@ $^
 
-%.cmxa: | %.mllib
+$(MLLIBFILES:.mllib=.cmxa): %.cmxa: | %.mllib
 	$(CAMLOPTLINK) $(ZDEBUG) $(ZFLAGS) -a -o $@ $^
 
-%.mllib.d: %.mllib
-	$(COQDEP) $(COQLIBS) -c "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
+$(addsuffix .d,$(MLLIBFILES)): %.mllib.d: %.mllib
+	$(COQDEP) $(OCAMLLIBS) "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
 
-%.vo %.glob: %.v
+$(VOFILES): %.vo: %.v
 	$(COQC) $(COQDEBUG) $(COQFLAGS) $*
 
-%.vi: %.v
+$(GLOBFILES): %.glob: %.v
+	$(COQC) $(COQDEBUG) $(COQFLAGS) $*
+
+$(VFILES:.v=.vi): %.vi: %.v
 	$(COQC) -quick $(COQDEBUG) $(COQFLAGS) $*
 
-%.g: %.v
+$(GFILES): %.g: %.v
 	$(GALLINA) $<
 
-%.tex: %.v
+$(VFILES:.v=.tex): %.tex: %.v
 	$(COQDOC) $(COQDOCFLAGS) -latex $< -o $@
 
-%.html: %.v %.glob
+$(HTMLFILES): %.html: %.v %.glob
 	$(COQDOC) $(COQDOCFLAGS) -html $< -o $@
 
-%.g.tex: %.v
+$(VFILES:.v=.g.tex): %.g.tex: %.v
 	$(COQDOC) $(COQDOCFLAGS) -latex -g $< -o $@
 
-%.g.html: %.v %.glob
+$(GHTMLFILES): %.g.html: %.v %.glob
 	$(COQDOC) $(COQDOCFLAGS)  -html -g $< -o $@
 
-%.v.d: %.v
+$(addsuffix .d,$(VFILES)): %.v.d: %.v
 	$(COQDEP) $(COQLIBS) "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
 
-%.v.beautified:
+$(addsuffix .beautified,$(VFILES)): %.v.beautified:
 	$(COQC) $(COQDEBUG) $(COQFLAGS) -beautify $*
 
 # WARNING
