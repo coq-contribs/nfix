@@ -54,7 +54,7 @@ let declare_definition
     binder_list red_expr_opt constr_expr
     constr_expr_opt decl_hook =
   Command.do_definition
-  id (loc, false, def_obj_kind) binder_list red_expr_opt constr_expr
+  id (loc, false, def_obj_kind) None binder_list red_expr_opt constr_expr
   constr_expr_opt decl_hook
 
 (* [abstract_body]
@@ -146,7 +146,7 @@ let create_mutual_fixpoint fids greps fdefs =
 				constr)) f greps
     in
       if_verbose msgnl (Ppconstr.pr_constr_expr f_with_lets);
-      (dl idf, (None, CStructRec),
+      ((dl idf, None), (None, CStructRec),
        List.map mk_binder bf,
        tf, Some f_with_lets)
   in
