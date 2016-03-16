@@ -1,8 +1,11 @@
 -I src
 -R theories Nfix
+
 CAMLP4OPTIONS = "-loc loc"
+
 src/nfix.ml4
 src/nfix_plugin_mod.ml
 src/nfix_plugin.mllib
+
 theories/Nfix.v
 tests/TestNfix.v
