@@ -2,6 +2,8 @@
 (*i camlp4use: "pa_extend.cmo" i*)
 
 open Pcoq
+open Pcoq.Prim
+open Pcoq.Constr
 open Pp
 open Flags
 open Constrexpr
