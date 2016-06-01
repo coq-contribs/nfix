@@ -147,7 +147,7 @@ let create_mutual_fixpoint fids greps fdefs =
 				mkAppC (mkIdentC gnewid, fids),
 				constr)) f greps
     in
-      if_verbose msgnl (Ppconstr.pr_constr_expr f_with_lets);
+      if_verbose Feedback.msg_info (Ppconstr.pr_constr_expr f_with_lets);
       ((dl idf, None), (None, CStructRec),
        List.map mk_binder bf,
        tf, Some f_with_lets)
@@ -199,12 +199,12 @@ let nested_fixpoint bodyl =
 		let (mind, _) = Global.lookup_inductive ind in
 		let n = mind.Declarations.mind_ntypes in
 		let mbodyl, nbodyl = split_at n bodyl in
-		  if_verbose msgnl (str "Mutual definitions :");
+		  if_verbose Feedback.msg_info (str "Mutual definitions :");
 		  List.iter (fun def ->
-			       if_verbose msgnl (pr_nfix_definition def)) mbodyl;
-		  if_verbose msgnl (str "Nested definitions :");
+			       if_verbose Feedback.msg_info (pr_nfix_definition def)) mbodyl;
+		  if_verbose Feedback.msg_info (str "Nested definitions :");
 		  List.iter (fun def ->
-			       if_verbose msgnl (pr_nfix_definition def)) nbodyl;
+			       if_verbose Feedback.msg_info (pr_nfix_definition def)) nbodyl;
 		  (* f1 with f2 ... with fn with g1 with .... with gk *)
 		  let fids =
 		    List.map (fun (id, _, _, _) -> mkIdentC id) mbodyl in
@@ -220,9 +220,9 @@ let nested_fixpoint bodyl =
 		  in
 		    create_mutual_fixpoint fids greps mbodyl;
 		    create_aliases fids greps
-	    | [] -> if_verbose msgnl (str "Empty list of binders")
+	    | [] -> if_verbose Feedback.msg_info (str "Empty list of binders")
 	end
-    | [] -> if_verbose msgnl (str "Empty list of definitions")
+    | [] -> if_verbose Feedback.msg_info (str "Empty list of definitions")
 
 VERNAC COMMAND EXTEND NestedFixpoint CLASSIFIED AS SIDEFF
   [ "Nested" "Fixpoint"
