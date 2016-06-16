@@ -138,6 +138,8 @@ let rec create_abstract_nested_bodies fids fbl greps = function
      tfn
    end.
 *)
+let default_typing_flags = { Declarations.check_guarded = true }
+
 let create_mutual_fixpoint fids greps fdefs =
   let create_fixpoint_expr (idf, bf, tf, f) =
     let f_with_lets =
@@ -152,7 +154,7 @@ let create_mutual_fixpoint fids greps fdefs =
        List.map mk_binder bf,
        tf, Some f_with_lets)
   in
-    Command.do_fixpoint Decl_kinds.Global false
+    Command.do_fixpoint default_typing_flags Decl_kinds.Global false
       (List.map (fun fdef -> create_fixpoint_expr fdef, []) fdefs)
 
 (* Creates aliases for the nested blocks :
