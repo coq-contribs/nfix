@@ -138,7 +138,7 @@ let rec create_abstract_nested_bodies fids fbl greps = function
      tfn
    end.
 *)
-let default_typing_flags = { Declarations.check_guarded = true }
+let default_typing_flags = Declareops.safe_flags
 
 let create_mutual_fixpoint fids greps fdefs =
   let create_fixpoint_expr (idf, bf, tf, f) =
