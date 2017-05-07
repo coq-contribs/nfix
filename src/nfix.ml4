@@ -47,7 +47,7 @@ let rec split_at n l =
 	  | [] -> failwith "split_at"
 
 let mk_binder (idl,c) =
-  LocalRawAssum (List.map (fun id -> dl (Names.Name id)) idl,
+  CLocalAssum (List.map (fun id -> dl (Names.Name id)) idl,
 		 default_binder_kind,
 		 c)
 
@@ -91,7 +91,7 @@ let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
     List.fold_left (fun constr (gid, gnewid) ->
 		      CLetIn (Loc.ghost,
 			      dl (Names.Name gid),
-			      mkAppC (mkIdentC gnewid, fids),
+			      mkAppC (mkIdentC gnewid, fids), None,
 			      constr)) gdef_renamed greps in
   let gfix =
     CFix (Loc.ghost, dl newid,
@@ -147,7 +147,7 @@ let create_mutual_fixpoint fids greps fdefs =
       List.fold_left (fun constr (gid, gnewid) ->
 			CLetIn (Loc.ghost,
 				dl (Names.Name gid),
-				mkAppC (mkIdentC gnewid, fids),
+				mkAppC (mkIdentC gnewid, fids), None,
 				constr)) f greps
     in
       if_verbose Feedback.msg_info (Ppconstr.pr_constr_expr f_with_lets);
@@ -211,7 +211,7 @@ let nested_fixpoint bodyl =
 		  (* f1 with f2 ... with fn with g1 with .... with gk *)
 		  let fids =
 		    List.map (fun (id, _, _, _) -> mkIdentC id) mbodyl in
-		  let fbl : local_binder list =
+		  let fbl =
 		    List.map (fun (id, bl, t, _) ->
 				let rt = mkCProdN Loc.ghost
 				  (List.map mk_binder bl) t in
