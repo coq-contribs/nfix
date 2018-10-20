@@ -2,8 +2,6 @@
 (*i camlp4use: "pa_extend.cmo" i*)
 
 open Ltac_plugin
-open Pcoq
-open Pcoq.Prim
 open Pcoq.Constr
 open Pp
 open Flags
@@ -33,8 +31,8 @@ PRINTED BY pr_nfix_definition
     [ (id,bl,type_,def) ]
       END
 
-let hole = CHole (Loc.ghost, None, Misctypes.IntroAnonymous, None)
-let dl id = Loc.ghost, id
+let hole = CHole (None, Misctypes.IntroAnonymous, None)
+let dl id = None, id
 
 let rec split_at n l =
   match n with
@@ -89,15 +87,14 @@ let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
     replace_vars_constr_expr (Names.Id.Map.add idg newid Names.Id.Map.empty) gdef in
   let gdef_with_lets =
     List.fold_left (fun constr (gid, gnewid) ->
-		      CLetIn (Loc.ghost,
-			      dl (Names.Name gid),
+		      CAst.make (CLetIn (dl (Names.Name gid),
 			      mkAppC (mkIdentC gnewid, fids), None,
-			      constr)) gdef_renamed greps in
+			      constr))) gdef_renamed greps in
   let gfix =
-    CFix (Loc.ghost, dl newid,
+    CAst.make (CFix (dl newid,
 	  [dl newid, (None, CStructRec),
 	   List.map mk_binder bg,
-	   tg, gdef_with_lets]) in
+	   tg, gdef_with_lets])) in
   let g_ =
     abstract_constr_expr gfix fbl in
     declare_definition newid
@@ -145,10 +142,9 @@ let create_mutual_fixpoint fids greps fdefs =
   let create_fixpoint_expr (idf, bf, tf, f) =
     let f_with_lets =
       List.fold_left (fun constr (gid, gnewid) ->
-			CLetIn (Loc.ghost,
-				dl (Names.Name gid),
+			CAst.make (CLetIn (dl (Names.Name gid),
 				mkAppC (mkIdentC gnewid, fids), None,
-				constr)) f greps
+				constr))) f greps
     in
       if_verbose Feedback.msg_info (Ppconstr.pr_constr_expr f_with_lets);
       ((dl idf, None), (None, CStructRec),
@@ -213,7 +209,7 @@ let nested_fixpoint bodyl =
 		    List.map (fun (id, _, _, _) -> mkIdentC id) mbodyl in
 		  let fbl =
 		    List.map (fun (id, bl, t, _) ->
-				let rt = mkCProdN Loc.ghost
+				let rt = mkCProdN
 				  (List.map mk_binder bl) t in
 				  mk_binder ([id], rt))
 		      mbodyl
