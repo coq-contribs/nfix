@@ -32,7 +32,7 @@ PRINTED BY pr_nfix_definition
       END
 
 let hole = CHole (None, Misctypes.IntroAnonymous, None)
-let dl id = None, id
+let dl id = CAst.make id
 
 let rec split_at n l =
   match n with
@@ -54,7 +54,7 @@ let declare_definition
     id (loc, def_obj_kind)
     binder_list red_expr_opt constr_expr
     constr_expr_opt decl_hook =
-  Command.do_definition
+  ComDefinition.do_definition ~program_mode:false
   id (loc, false, def_obj_kind) None binder_list red_expr_opt constr_expr
   constr_expr_opt decl_hook
 
@@ -151,7 +151,7 @@ let create_mutual_fixpoint fids greps fdefs =
        List.map mk_binder bf,
        tf, Some f_with_lets)
   in
-    Command.do_fixpoint Decl_kinds.Global false
+    ComFixpoint.do_fixpoint Decl_kinds.Global false
       (List.map (fun fdef -> create_fixpoint_expr fdef, []) fdefs)
 
 (* Creates aliases for the nested blocks :
@@ -192,10 +192,11 @@ let nested_fixpoint bodyl =
 	begin
 	  match bl with
 	    | (_, c)::_ ->
+                let open Inductiveops in
 		let constr =
 		  Constrintern.interp_constr (Global.env ()) Evd.empty c in
-		let ((ind, _), _) = Inductive.find_rectype (Global.env ()) (fst constr) in
-		let (mind, _) = Global.lookup_inductive ind in
+		let IndType (indf, _) = find_rectype (Global.env ()) Evd.empty (fst constr) in
+		let (mind, _) = Global.lookup_inductive (fst (fst (dest_ind_family indf))) in
 		let n = mind.Declarations.mind_ntypes in
 		let mbodyl, nbodyl = split_at n bodyl in
 		  if_verbose Feedback.msg_info (str "Mutual definitions :");
