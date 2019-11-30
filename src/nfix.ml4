@@ -7,11 +7,11 @@ open Pp
 open Flags
 open Constrexpr
 open Constrexpr_ops
-open Topconstr
 open Nameops
+open Names
 
 let pr_nbinder (idl,c) =
-  str "(" ++ pr_sequence Nameops.pr_id idl ++ spc () ++
+  str "(" ++ pr_sequence Id.print idl ++ spc () ++
     str ": " ++ Ppconstr.pr_lconstr_expr c ++ str ")"
 
 VERNAC ARGUMENT EXTEND nbinder
@@ -20,7 +20,7 @@ PRINTED BY pr_nbinder
 END
 
 let pr_nfix_definition (id,bl,type_,def) =
-  Nameops.pr_id id ++ spc () ++
+  Id.print id ++ spc () ++
     pr_sequence pr_nbinder bl ++ spc () ++ str ":" ++ spc () ++
     Ppconstr.pr_lconstr_expr type_ ++ str " :=" ++ spc () ++
     Ppconstr.pr_lconstr_expr def
@@ -31,7 +31,7 @@ PRINTED BY pr_nfix_definition
     [ (id,bl,type_,def) ]
       END
 
-let hole = CHole (None, Misctypes.IntroAnonymous, None)
+let hole = CHole (None, Namegen.IntroAnonymous, None)
 let dl id = CAst.make id
 
 let rec split_at n l =
@@ -96,7 +96,7 @@ let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
 	   List.map mk_binder bg,
 	   tg, gdef_with_lets])) in
   let g_ =
-    abstract_constr_expr gfix fbl in
+    mkCLambdaN fbl gfix in
     declare_definition newid
       (Decl_kinds.Global, Decl_kinds.Definition)
       [] None g_ None (Lemmas.mk_hook (fun _ _ -> ()))
