@@ -1,7 +1,5 @@
-(*i camlp4deps: "parsing/grammar.cma" i*)
-(*i camlp4use: "pa_extend.cmo" i*)
+{
 
-open Ltac_plugin
 open Pcoq.Constr
 open Pp
 open Flags
@@ -11,25 +9,39 @@ open Nameops
 open Names
 
 let pr_nbinder (idl,c) =
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
   str "(" ++ pr_sequence Id.print idl ++ spc () ++
-    str ": " ++ Ppconstr.pr_lconstr_expr c ++ str ")"
+    str ": " ++ Ppconstr.pr_lconstr_expr env sigma c ++ str ")"
+
+}
+
+DECLARE PLUGIN "nfix_plugin"
 
 VERNAC ARGUMENT EXTEND nbinder
-PRINTED BY pr_nbinder
-    [ "(" ne_ident_list(idl) ":" lconstr(c)  ")"] -> [ (idl,c) ]
+PRINTED BY { pr_nbinder }
+| [ "(" ne_ident_list(idl) ":" lconstr(c)  ")"] -> { (idl,c) }
 END
 
+{
+
 let pr_nfix_definition (id,bl,type_,def) =
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
   Id.print id ++ spc () ++
     pr_sequence pr_nbinder bl ++ spc () ++ str ":" ++ spc () ++
-    Ppconstr.pr_lconstr_expr type_ ++ str " :=" ++ spc () ++
-    Ppconstr.pr_lconstr_expr def
+    Ppconstr.pr_lconstr_expr env sigma type_ ++ str " :=" ++ spc () ++
+    Ppconstr.pr_lconstr_expr env sigma def
+
+}
 
 VERNAC ARGUMENT EXTEND nfix_definition
-PRINTED BY pr_nfix_definition
- [ ident(id)  nbinder_list(bl) ":" lconstr(type_) ":=" lconstr(def)] ->
-    [ (id,bl,type_,def) ]
+PRINTED BY { pr_nfix_definition }
+| [ ident(id)  nbinder_list(bl) ":" lconstr(type_) ":=" lconstr(def)] ->
+    { (id,bl,type_,def) }
       END
+
+{
 
 let hole = CHole (None, Namegen.IntroAnonymous, None)
 let dl id = CAst.make id
@@ -56,7 +68,7 @@ let declare_definition
     constr_expr_opt decl_hook =
   ComDefinition.do_definition ~program_mode:false
   id (loc, false, def_obj_kind) None binder_list red_expr_opt constr_expr
-  constr_expr_opt decl_hook
+  constr_expr_opt ~hook:decl_hook
 
 (* [abstract_body]
     - [idg, bg, tg, gdef] is a block from the definition
@@ -92,14 +104,14 @@ let abstract_body fids fbl greps (idg, bg, tg, gdef) newid =
 			      constr))) gdef_renamed greps in
   let gfix =
     CAst.make (CFix (dl newid,
-	  [dl newid, (None, CStructRec),
+	  [dl newid, None,
 	   List.map mk_binder bg,
 	   tg, gdef_with_lets])) in
   let g_ =
     mkCLambdaN fbl gfix in
-    declare_definition newid
+    declare_definition ~ontop:None newid
       (Decl_kinds.Global, Decl_kinds.Definition)
-      [] None g_ None (Lemmas.mk_hook (fun _ _ -> ()))
+      [] None g_ None (Lemmas.mk_hook (fun _ _ _ _ -> ()))
 
 
 (* Creates the generalized [g_] functions for all the
@@ -146,13 +158,16 @@ let create_mutual_fixpoint fids greps fdefs =
 				mkAppC (mkIdentC gnewid, fids), None,
 				constr))) f greps
     in
-      if_verbose Feedback.msg_info (Ppconstr.pr_constr_expr f_with_lets);
-      ((dl idf, None), (None, CStructRec),
+      if_verbose Feedback.msg_info
+       (let env = Global.env () in
+        let sigma = Evd.from_env env in
+        Ppconstr.pr_constr_expr env sigma f_with_lets);
+      ((dl idf, None), None,
        List.map mk_binder bf,
        tf, Some f_with_lets)
   in
-    ComFixpoint.do_fixpoint Decl_kinds.Global false
-      (List.map (fun fdef -> create_fixpoint_expr fdef, []) fdefs)
+    ignore (ComFixpoint.do_fixpoint ~ontop:None Decl_kinds.Global false
+      (List.map (fun fdef -> create_fixpoint_expr fdef, []) fdefs))
 
 (* Creates aliases for the nested blocks :
    Definition g1 := g1_ f1 ... fn.
@@ -162,9 +177,9 @@ let create_mutual_fixpoint fids greps fdefs =
 let create_aliases fids greps =
   List.iter (fun (gid, gnewid) ->
 	       let galias = mkAppC (mkIdentC gnewid, fids) in
-		 declare_definition gid
+		 declare_definition ~ontop:None gid
 		   (Decl_kinds.Global, Decl_kinds.Definition)
-		   [] None galias None (Lemmas.mk_hook (fun _ _ -> ()))
+		   [] None galias None (Lemmas.mk_hook (fun _ _ _ _ -> ()))
 	    ) greps
 
 (* Takes a list of blocks and defines everything.
@@ -224,11 +239,13 @@ let nested_fixpoint bodyl =
 	end
     | [] -> if_verbose Feedback.msg_info (str "Empty list of definitions")
 
+}
+
 VERNAC COMMAND EXTEND NestedFixpoint CLASSIFIED AS SIDEFF
-  [ "Nested" "Fixpoint"
+| [ "Nested" "Fixpoint"
       ne_nfix_definition_list_sep(bodyl,"with")
   ] ->
-    [
+    {
       nested_fixpoint bodyl
-    ]
+    }
 END

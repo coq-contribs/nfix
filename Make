@@ -3,7 +3,7 @@
 
 CAMLP4OPTIONS = "-loc loc"
 
-src/nfix.ml4
+src/nfix.mlg
 src/nfix_plugin_mod.ml
 src/nfix_plugin.mllib
 
